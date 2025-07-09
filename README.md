@@ -1,90 +1,92 @@
-# FastAPI Request Logger
+This project is a **simple API service for quick testing** that allows applications to interact with it and verify if they can connect to the internet.
 
-A simple FastAPI server that logs all incoming request headers and body data.
+## Purpose
+
+This lightweight FastAPI service is designed to:
+- **Test Internet Connectivity**: Applications can make requests to this service to verify they have internet access
+- **Request Logging**: All incoming requests are logged with detailed information including headers and body content
+- **Simple Testing**: Provides a straightforward endpoint for connectivity and integration testing
 
 ## Features
 
-- **Catch-all endpoint**: Accepts any HTTP method (GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS) on any path
-- **Header logging**: Logs all request headers
-- **Body logging**: Logs request body (with JSON pretty-printing when applicable)
-- **JSON content type support**: Handles JSON requests and responses
-- **Docker support**: Includes Dockerfile for easy containerization
+- **FastAPI-based**: Modern, fast web framework for building APIs
+- **Request Logging**: Automatically logs all incoming requests with headers and body data
+- **JSON Response**: Returns structured JSON responses for easy parsing
+- **Docker Support**: Includes Docker configuration for easy deployment
+- **Lightweight**: Minimal dependencies and simple setup
 
 ## Quick Start
 
-### Using Docker (Recommended)
+### Local Development
 
-1. **Build the Docker image:**
-   ```bash
-   docker build -t fastapi-logger .
-   ```
-
-2. **Run the container:**
-   ```bash
-   docker run -p 8000:8000 fastapi-logger
-   ```
-
-3. **Access the API:**
-   - Root endpoint: http://localhost:8000
-   - Send requests to any path: http://localhost:8000/your-path
-
-### Using Python directly
-
-1. **Install dependencies:**
+1. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **Run the server:**
+2. Run the service:
    ```bash
    python main.py
    ```
-   or
+
+3. The API will be available at `http://localhost:8000`
+
+### Docker
+
+1. Build the Docker image:
    ```bash
-   uvicorn main:app --reload
+   docker build -t call-flow-test .
    ```
 
-## Usage Examples
-
-### Test with curl:
-
-```bash
-# GET request
-curl http://localhost:8000/test
-
-# POST request with JSON
-curl -X POST http://localhost:8000/api/data \
-  -H "Content-Type: application/json" \
-  -d '{"key": "value", "number": 42}'
-
-# PUT request with custom headers
-curl -X PUT http://localhost:8000/users/123 \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer token123" \
-  -d '{"name": "John Doe", "email": "john@example.com"}'
-```
-
-## What gets logged
-
-For each request, the server logs:
-- **Request Headers**: All HTTP headers sent with the request
-- **Request Body**: The complete request body (formatted as JSON if applicable)
-- **Request Info**: HTTP method, URL, path, and query parameters
+2. Run the container:
+   ```bash
+   docker run -p 8000:8000 call-flow-test
+   ```
 
 ## API Endpoints
 
-- `{method} /` and `{method} /{path:path}`: Single endpoint that logs and responds to any request on any path
+### GET /test
 
-## Configuration
+**Purpose**: Main endpoint for testing connectivity and logging requests
 
-The server runs on:
-- **Host**: 0.0.0.0 (all interfaces)
-- **Port**: 8000
+**Response**:
+```json
+{
+    "message": "Request Logger API is running",
+    "version": "1.0.0",
+    "description": "Send any request to any path and it will be logged"
+}
+```
 
-## Docker
+**Usage**: Applications can make GET requests to `/test` to verify:
+- Internet connectivity is working
+- The service is accessible and responding
+- Request details are being logged properly
 
-The included Dockerfile:
-- Uses Python 3.11 slim image
-- Installs dependencies from requirements.txt
-- Exposes port 8000
-- Runs with auto-reload enabled for development 
+## Use Cases
+
+This service is particularly useful for:
+- **Network Testing**: Verify applications can reach external services
+- **Integration Testing**: Test API connectivity in development/staging environments
+- **Debugging**: Log and analyze request patterns during development
+- **Health Checks**: Simple endpoint for monitoring and health verification
+
+## Logging
+
+All requests are logged with:
+- Complete request headers
+- Request body content (JSON formatted when possible)
+- Timestamp and detailed formatting
+- Error handling for malformed requests
+
+## Requirements
+
+- Python 3.7+
+- FastAPI
+- Uvicorn
+
+See `requirements.txt` for exact dependencies.
+
+---
+
+*This is a simple, no-frills API service designed specifically for quick connectivity testing and request logging.*
