@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 import json
@@ -12,6 +13,71 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Request Logger API", version="1.0.0")
+
+# TCP Server Configuration
+TCP_HOST = "0.0.0.0"
+TCP_PORT = 8001
+
+async def handle_tcp_client(reader, writer):
+    """
+    Handle TCP client connections and log all incoming data
+    """
+    client_addr = writer.get_extra_info('peername')
+    logger.info(f"TCP client connected from {client_addr}")
+    
+    try:
+        # Send welcome message
+        welcome_msg = "Connected to TCP Logger Server\n"
+        writer.write(welcome_msg.encode('utf-8'))
+        await writer.drain()
+        
+        while True:
+            # Read data from client
+            data = await reader.read(1024)
+            if not data:
+                break
+                
+            # Log the received data
+            try:
+                message = data.decode('utf-8').strip()
+                logger.info(f"TCP Message from {client_addr}: {json.dumps({'type': 'text', 'message': message}, indent=2)}")
+                
+                # Echo back confirmation
+                response = f"Logged: {message}\n"
+                writer.write(response.encode('utf-8'))
+                await writer.drain()
+                
+            except UnicodeDecodeError:
+                # Handle binary data
+                logger.info(f"TCP Binary Message from {client_addr}: {json.dumps({'type': 'binary', 'length': len(data)}, indent=2)}")
+                
+                response = f"Logged binary message of length: {len(data)}\n"
+                writer.write(response.encode('utf-8'))
+                await writer.drain()
+                
+    except asyncio.CancelledError:
+        logger.info(f"TCP client {client_addr} connection cancelled")
+    except Exception as e:
+        logger.error(f"TCP client {client_addr} error: {e}")
+    finally:
+        logger.info(f"TCP client {client_addr} disconnected")
+        writer.close()
+        await writer.wait_closed()
+
+async def start_tcp_server():
+    """
+    Start the TCP server
+    """
+    server = await asyncio.start_server(
+        handle_tcp_client,
+        TCP_HOST,
+        TCP_PORT
+    )
+    
+    logger.info(f"TCP server started on {TCP_HOST}:{TCP_PORT}")
+    
+    async with server:
+        await server.serve_forever()
 
 @app.get("/test_get")
 async def test(request: Request):
@@ -141,4 +207,25 @@ async def websocket_endpoint(websocket: WebSocket):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    
+    async def main():
+        """
+        Run both FastAPI (WebSocket) and TCP servers concurrently
+        """
+        # Create tasks for both servers
+        tcp_task = asyncio.create_task(start_tcp_server())
+        
+        # Configure uvicorn to run FastAPI
+        config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
+        server = uvicorn.Server(config)
+        
+        logger.info("Starting both WebSocket (port 8000) and TCP (port 8001) servers...")
+        
+        # Run both servers concurrently
+        await asyncio.gather(
+            server.serve(),
+            tcp_task
+        )
+    
+    # Run the main async function
+    asyncio.run(main()) 
