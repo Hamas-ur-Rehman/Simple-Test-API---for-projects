@@ -16,7 +16,7 @@ app = FastAPI(title="Request Logger API", version="1.0.0")
 
 # TCP Server Configuration
 TCP_HOST = "0.0.0.0"
-TCP_PORT = 8001
+TCP_PORT = 8000
 
 async def handle_tcp_client(reader, writer):
     """
@@ -210,22 +210,12 @@ if __name__ == "__main__":
     
     async def main():
         """
-        Run both FastAPI (WebSocket) and TCP servers concurrently
+        Run TCP server on port 8000
         """
-        # Create tasks for both servers
-        tcp_task = asyncio.create_task(start_tcp_server())
+        logger.info("Starting TCP server on port 8000...")
         
-        # Configure uvicorn to run FastAPI
-        config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
-        server = uvicorn.Server(config)
-        
-        logger.info("Starting both WebSocket (port 8000) and TCP (port 8001) servers...")
-        
-        # Run both servers concurrently
-        await asyncio.gather(
-            server.serve(),
-            tcp_task
-        )
+        # Start only the TCP server
+        await start_tcp_server()
     
     # Run the main async function
     asyncio.run(main()) 
